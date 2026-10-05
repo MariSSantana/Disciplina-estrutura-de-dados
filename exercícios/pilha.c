@@ -1,109 +1,122 @@
-// Biblioteca padrão de entrada e saída (para usar o printf)
+// Biblioteca padrão de entrada e saída, necessária para usar a função printf
 #include <stdio.h>
-// Biblioteca para alocação dinâmica de memória (para usar o malloc e free)
+// Biblioteca para alocação de memória e controle do sistema (malloc, free e exit)
 #include <stdlib.h>
-// Biblioteca para manipulação de strings (não usada aqui, mas mantida do original)
+// Biblioteca para manipulação de strings (mantida do código original da aula)
 #include <string.h>
 
-// Define a estrutura de cada nó (elemento) da nossa Fila
-typedef struct FILA {
-    int valor;             // Guarda o dado inteiro deste nó
-    struct FILA *proximo;  // Ponteiro que aponta para o próximo nó da fila
-} Fila;                     // Cria o apelido "Fila" para a estrutura struct FILA
+// Definição da estrutura que representa cada nó (elemento) dentro da nossa lista
+typedef struct NO {
+    float valor;           // Variável do tipo float que armazena o dado numérico do nó
+    struct NO *proximo;    // Ponteiro que aponta para o endereço do próximo nó da lista
+} No;                      // Define o apelido "No" para simplificar a criação de variáveis
 
-// Operação: enfileirar (Insere um novo elemento sempre no FINAL da fila)
-void enfileirar(Fila **f, int valor) {
-    Fila *novo; // Declara um ponteiro para o novo nó que será criado
-    Fila *ptr;  // Declara um ponteiro auxiliar para navegar pela fila
+// --- OPERAÇÕES DA FILA SOLICITADAS PELO EXERCÍCIO ---
 
-    novo = malloc(sizeof(Fila)); // Aloca memória dinamicamente para o novo nó
-    if (!novo) { // Se 'novo' for NULL, significa que o sistema ficou sem memória
-        printf("Erro de alocação.\n"); // Exibe uma mensagem de erro na tela
-        exit(-1);    // Encerra a execução do programa com código de erro
+// Operação: enfileirar (Insere um novo elemento sempre no FINAL da lista encadeada)
+// Recebe um ponteiro para ponteiro (**f) para poder modificar o início da fila se necessário
+void enfileirar(No **f, float valor) {
+    No *novo; // Declaração de um ponteiro auxiliar para criar o novo nó
+    No *ptr;  // Declaração de um ponteiro auxiliar para navegar pela lista existente
+
+    novo = malloc(sizeof(No)); // Solicita ao sistema memória dinamicamente para o novo nó
+    if (!novo) { // Verifica se 'novo' é NULL, o que significa falta de memória no sistema
+        printf("Erro de alocação de memória.\n"); // Exibe uma mensagem de erro na tela
+        exit(-1);    // Encerra imediatamente o programa com um código de falha (-1)
     }
-    novo->valor = valor;     // Salva o valor recebido dentro do novo nó
-    novo->proximo = NULL;    // Como ele será o último da fila, o próximo dele é NULL
 
-    if (*f == NULL) {        // Se a fila estiver completamente vazia...
-        *f = novo;           // ...o ponteiro da fila passa a apontar diretamente para ele
-        return;              // Encerra a função mais cedo, pois o trabalho acabou
+    novo->valor = valor; // Atribui o número float recebido ao campo 'valor' do novo nó
+    novo->proximo = NULL; // Como este nó entrará no fim, o próximo dele deve apontar para NULL   
+
+    if (*f == NULL) {  // Verifica se o ponteiro que indica o começo da fila está vazio (NULL)
+        *f = novo;     // Se estiver vazia, o início da fila passa a apontar direto para o novo nó
+        return;        // Finaliza a execução da função mais cedo, pois a inserção acabou
     }
-    ptr = *f;                // Se não estava vazia, o ponteiro auxiliar começa no início
-    while (ptr->proximo != NULL) // Enquanto não chegar no último elemento da fila...
-        ptr = ptr->proximo;  // ...avança o ponteiro auxiliar para o próximo nó
-    ptr->proximo = novo;     // O antigo último elemento agora aponta para o novo nó
-}
 
-// Operação: desenfileirar (Remove e retorna o elemento do INÍCIO da fila)
-int desenfileirar(Fila **f) {
-    Fila *p; // Declara um ponteiro temporário para guardar o nó que será removido
-    int val; // Declara uma variável para guardar o valor do nó antes de apagá-lo
-
-    if (*f == NULL) return -99999; // Se a fila estiver vazia, retorna um código de erro
-    p = *f;    // O ponteiro temporário aponta para o primeiro elemento atual
-    *f = p->proximo; // O início da fila agora passa a ser o segundo elemento
-
-    val = p->valor; // Guarda o valor numérico que estava no nó que vai sumir
-    free(p);        // Libera a memória do nó antigo da fila para o sistema operacional
-    return val;     // Retorna o valor que acabou de ser retirado da fila
-}
-
-// Operação: filavazia (Verifica se a fila não possui nenhum elemento)
-int filavazia(Fila *f) {
-    return f == NULL; // Retorna 1 (verdadeiro) se for NULL, ou 0 (falso) caso contrário
-}
-
-// Operação: frente / peek (Apenas olha o primeiro da fila sem removê-lo)
-int frente(Fila *f) {
-    if (f == NULL) return -99999; // Se a fila estiver vazia, retorna o código de erro
-    return f->valor; // Retorna o valor contido no primeiro elemento
-}
-
-// Função auxiliar para contar a quantidade de elementos na fila
-int tamanho(Fila *f) {
-    int tam = 0; // Inicializa o contador de tamanho em zero
-    while (f) {  // Enquanto o ponteiro 'f' não for NULL (não chegar ao fim)...
-        tam++;   // Incrementa em 1 o contador de elementos
-        f = f->proximo; // Avança o ponteiro para analisar o próximo nó
+    ptr = *f; // Se a fila não estava vazia, o ponteiro auxiliar começa a busca do início (*f)
+    while (ptr->proximo != NULL) { // Laço que se repete até encontrar o nó cujo próximo seja NULL
+        ptr = ptr->proximo;        // Avança o ponteiro auxiliar para o próximo nó da lista
     }
-    return tam;  // Retorna a quantidade total de nós encontrados
+    
+    ptr->proximo = novo; // O antigo último nó agora deixa de apontar para NULL e aponta para o novo nó
 }
 
-// Função principal onde o programa começa a ser executado
+// Operação: desenfileirar (Remove e retorna o elemento localizado no INÍCIO da lista)
+// Recebe um ponteiro para ponteiro (**f) para poder atualizar o início da fila após a remoção
+float desenfileirar(No **f) {
+    No *p;     // Declara um ponteiro temporário para segurar o nó que será deletado
+    float val; // Declara uma variável para salvar o dado numérico antes de apagar o nó
+
+    if (*f == NULL) { // Verifica se a fila está vazia antes de tentar remover
+        return -99999.0; // Retorna um número sentinela que indica código de erro para fila vazia
+    }
+    
+    p = *f;          // O ponteiro temporário 'p' recebe o endereço do primeiro elemento atual
+    *f = p->proximo; // O ponteiro real do início da fila avança e assume o endereço do segundo nó
+
+    val = p->valor;  // Transfere o dado numérico float do nó removido para a variável 'val'
+    free(p);         // Libera o espaço de memória ocupado por aquele nó antigo de volta ao sistema
+    return val;      // Retorna o valor float que acabou de ser retirado da fila
+}
+
+// Operação: filavazia (Verifica se a fila possui ou não algum elemento)
+int filavazia(No *f) {
+    return f == NULL; // Retorna 1 (verdadeiro) se o ponteiro for NULL, ou 0 (falso) caso contrário
+}
+
+// Operação: frente / peek (Permite visualizar o dado do início da fila sem removê-lo)
+float frente(No *f) {
+    if (f == NULL) { // Verifica se a fila está vazia antes de acessar o dado
+        return -99999.0; // Retorna o código sentinela de erro indicando que não há dados
+    }
+    return f->valor; // Retorna o número que está salvo dentro do primeiro nó da fila
+}
+
+// Função auxiliar da aula para medir a quantidade total de elementos na lista
+int len(No *p) {
+    int conta = 0; // Inicializa a variável contadora com o valor zero
+    if (p == NULL) return 0; // Se a listas estiver vazia, retorna zero de imediato
+    do { // Inicia um bloco de repetição que executa pelo menos uma vez
+        conta++; // Adiciona mais 1 unidade ao contador de elementos
+        p = p->proximo; // Move o ponteiro para o próximo nó da sequência
+    } while (p); // O loop continua rodando enquanto o ponteiro 'p' for diferente de NULL
+    return conta; // Retorna o total acumulado de nós encontrados na lista
+}
+
+// Função principal, ponto onde o programa inicia a execução no computador
 int main() {
-    Fila *fila = NULL; // Cria um ponteiro de Fila e inicializa como vazia (NULL)
+    No *fila = NULL; // Declara o ponteiro base da fila e o inicializa como vazio (NULL)
 
-    // Exibe se a fila está vazia no começo (vai imprimir "Sim")
-    printf("A fila está vazia? %s\n", filavazia(fila) ? "Sim" : "Não");
+    // Testa se a função filavazia funciona na fila recém-criada (vai imprimir "Sim")
+    printf("A fila está inicialmente vazia? %s\n", filavazia(fila) ? "Sim" : "Não");
 
-    // Adiciona quatro elementos seguidos no final da fila (10, depois 20, 30, 40)
-    enfileirar(&fila, 10);
-    enfileirar(&fila, 20);
-    enfileirar(&fila, 30);
-    enfileirar(&fila, 40);
+    // Executa inserções na fila passando o endereço do ponteiro (&fila) e os dados float
+    enfileirar(&fila, 10.5); // Insere o valor 10.5 (se torna o primeiro)
+    enfileirar(&fila, 20.0); // Insere o valor 20.0 no final
+    enfileirar(&fila, 35.7); // Insere o valor 35.7 no final
+    enfileirar(&fila, 40.0); // Insere o valor 40.0 no final
 
-    // Exibe se a fila está vazia agora (vai imprimir "Não")
-    printf("A fila está vazia agora? %s\n", filavazia(fila) ? "Sim" : "Não");
-    // Mostra qual é o primeiro elemento (vai imprimir 10) sem tirá-lo dali
-    printf("Elemento na frente (peek): %d\n", frente(fila));
+    // Verifica se a fila mudou de estado com as inserções (vai imprimir "Não")
+    printf("Fila está vazia após inserções? %s\n", filavazia(fila) ? "Sim" : "Não");
+    // Imprime a quantidade de elementos que foram inseridos com sucesso (deve dar 4)
+    printf("Quantidade de elementos na fila: %d\n", len(fila));
+    
+    // Testa a operação frente (peek) que deve apenas ler o primeiro dado (vai exibir 10.50)
+    printf("Primeiro elemento da fila (frente): %.2f\n", frente(fila));
 
-    // Remove e exibe os três primeiros da fila (vai tirar o 10, depois o 20, depois o 30)
-    printf("Retirado: %d\n", desenfileirar(&fila));
-    printf("Retirado: %d\n", desenfileirar(&fila));
-    printf("Retirado: %d\n", desenfileirar(&fila));
+    // Executa e testa as remoções da fila (Devem sair na ordem correta de entrada: FIFO)
+    printf("Item removido: %.2f\n", desenfileirar(&fila)); // Remove e exibe o 10.5
+    printf("Item removido: %.2f\n", desenfileirar(&fila)); // Remove e exibe o 20.0
 
-    // Mostra quem sobrou na frente da fila (vai imprimir 40)
-    printf("Elemento na frente após remoções: %d\n", frente(fila));
+    // Verifica quem herdou o primeiro lugar da fila após as duas remoções (deve ser 35.70)
+    printf("Nova frente após remoções: %.2f\n", frente(fila)); 
 
-    // Adiciona mais dois elementos no fim da fila (50 e depois 60)
-    enfileirar(&fila, 50);
-    enfileirar(&fila, 60);
-
-    // Loop que continua rodando enquanto a fila NÃO estiver vazia
-    while (!filavazia(fila)) {
-        // Remove e imprime o próximo elemento da vez (vai imprimir 40, 50 e 60)
-        printf("Retirado: %d\n", desenfileirar(&fila));
+    // Imprime um cabeçalho estético para indicar o esvaziamento total no terminal
+    printf("\n--- Esvaziando a Fila ---\n");
+    while (!filavazia(fila)) { // Enquanto a função filavazia retornar falso (0), continua o loop
+        // Remove o elemento da vez e o imprime imediatamente na tela (exibe 35.70 e depois 40.00)
+        printf("Item removido: %.2f\n", desenfileirar(&fila));
     }
 
-    return 0; // Informa ao sistema que o programa terminou perfeitamente
+    return 0; // Retorna o código 0 para indicar que o programa finalizou com absoluto sucesso
 }
